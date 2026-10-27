@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from retailiq.database.connection import get_engine, init_db
+from retailiq.database.connection import get_engine, init_db, reset_engine
 from retailiq.database.repositories import LakehouseRepository
 from retailiq.transformations.cleaning import SilverCleaner
 from tests.fixtures.sample_dataset import create_sample_dataframe
@@ -11,6 +11,7 @@ from tests.fixtures.sample_dataset import create_sample_dataframe
 def test_database_init_and_repository(tmp_path: Path):
     db_file = tmp_path / "test_retailiq.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{db_file}"
+    reset_engine()
 
     # Initialize tables
     init_db()

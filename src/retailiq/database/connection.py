@@ -26,6 +26,15 @@ def get_db_url() -> str:
     return url
 
 
+def reset_engine() -> None:
+    """Reset cached global engine and session factory (useful for tests and dynamic database URLs)."""
+    global _engine, _session_factory
+    if _engine is not None:
+        _engine.dispose()
+    _engine = None
+    _session_factory = None
+
+
 def get_engine() -> Engine:
     """Create or return the global SQLAlchemy engine."""
     global _engine
