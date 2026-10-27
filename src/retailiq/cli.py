@@ -111,11 +111,24 @@ def cmd_status(args: argparse.Namespace) -> None:
             print(f"    Error: {batch.error_message}")
 
 
+def cmd_run_all(args: argparse.Namespace) -> None:
+    """Execute complete end-to-end lakehouse pipeline."""
+    from retailiq.pipeline.runner import PipelineRunner
+    runner = PipelineRunner()
+    runner.run_all(limit=args.limit, force_ingest=args.force)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="RetailIQ CLI: E-commerce Data Lakehouse & Pipeline Engine"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # run-all
+    p_all = subparsers.add_parser("run-all", help="Execute complete Bronze->Silver->Gold->QA pipeline")
+    p_all.add_argument("--limit", type=int, default=None, help="Optional row limit for testing")
+    p_all.add_argument("--force", action="store_true", help="Force re-ingestion")
+    p_all.set_defaults(func=cmd_run_all)
 
     # download
     p_dl = subparsers.add_parser("download", help="Download raw UCI Online Retail dataset")
