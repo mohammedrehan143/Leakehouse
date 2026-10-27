@@ -5,6 +5,7 @@
   "description": "RetailIQ E-commerce Lakehouse & Multi-Agent Analytics Platform",
   "scripts": {
     "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "vercel-build": "npm --prefix frontend install && npm --prefix frontend run build",
     "dev": "npm --prefix frontend run dev",
     "test": "npm --prefix frontend run test"
   }
