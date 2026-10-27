@@ -1,0 +1,11 @@
+{
+  "name": "retailiq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RetailIQ E-commerce Lakehouse & Multi-Agent Analytics Platform",
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev",
+    "test": "npm --prefix frontend run test"
+  }
+}

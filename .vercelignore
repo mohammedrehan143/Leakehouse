@@ -1,0 +1,20 @@
+# Backend & Environment
+backend/
+agent_runtime/
+airflow/
+dbt_retailiq/
+configs/
+data/
+tests/
+.agents/
+.pytest_cache/
+.ruff_cache/
+*.db
+*.sqlite*
+*.parquet
+*.xlsx
+*.zip
+__pycache__/
+*.pyc
+.venv/
+venv/

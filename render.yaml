@@ -1,0 +1,23 @@
+services:
+  # ----------------------------------------------------------------------------
+  # Render Web Service: RetailIQ FastAPI Analytics & Multi-Agent Backend
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: retailiq-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && pip install -e ."
+    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.7
+      - key: PYTHONPATH
+        value: src
+      - key: RETAILIQ_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        value: sqlite:///data/processed/retailiq_dev.db

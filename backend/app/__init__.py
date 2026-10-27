@@ -1,0 +1,1 @@
+"""RetailIQ FastAPI Application Module."""
