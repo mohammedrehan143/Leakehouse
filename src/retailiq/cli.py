@@ -48,9 +48,11 @@ def cmd_ingest(args: argparse.Namespace) -> None:
 
 
 def cmd_transform(args: argparse.Namespace) -> None:
-    """Clean Bronze records and produce Silver Lakehouse layer."""
-    print("=== RetailIQ Silver Layer Transformation ===")
+    """Clean Bronze records and produce Silver and Gold Lakehouse layers."""
+    layer = getattr(args, "layer", "all")
+    print(f"=== RetailIQ Lakehouse Transformation (Layer: {layer}) ===")
     import pyarrow.parquet as pq
+    from retailiq.analytics.gold_builder import GoldLayerBuilder
     from retailiq.database.connection import init_db
     from retailiq.database.repositories import LakehouseRepository
     from retailiq.transformations.cleaning import SilverCleaner
@@ -67,14 +69,19 @@ def cmd_transform(args: argparse.Namespace) -> None:
         bronze_df = bronze_df.head(args.limit)
 
     cleaner = SilverCleaner()
-    valid_df, quarantine_df, summary = cleaner.clean_dataframe(bronze_df, batch_id="BATCH_SILVER_TRANSFORM")
+    valid_df, quarantine_df, summary = cleaner.clean_dataframe(bronze_df, batch_id="BATCH_TRANSFORM")
 
     print(f"Total Bronze Records: {summary.total_bronze_records:,}")
     print(f"Valid Silver Records: {summary.valid_silver_records:,}")
     print(f"Quarantined Records:  {summary.quarantined_records:,}")
     print(f"Cancellations:        {summary.cancellations_count:,}")
     print(f"Guest Checkouts:      {summary.guest_checkouts_count:,}")
-    print(f"Silver Parquet:       {summary.silver_output_file}")
+
+    if layer in ["gold", "all"]:
+        print("[*] Building Gold layer dimensions, facts, and analytical marts...")
+        gold_builder = GoldLayerBuilder()
+        gold_summary = gold_builder.build_gold_layer(valid_df, persist_to_db=args.load_db)
+        print(f"[+] Gold Layer Built: {gold_summary.fact_sales_count:,} sales, {gold_summary.fact_returns_count:,} returns, {gold_summary.dim_customers_count:,} customers.")
 
     if args.load_db:
         print("[*] Initializing database and persisting Silver records...")
@@ -124,9 +131,10 @@ def main() -> None:
     p_ing.set_defaults(func=cmd_ingest)
 
     # transform
-    p_tf = subparsers.add_parser("transform", help="Clean Bronze records and produce Silver Lakehouse layer")
+    p_tf = subparsers.add_parser("transform", help="Clean Bronze records and produce Silver and Gold Lakehouse layers")
+    p_tf.add_argument("--layer", type=str, default="all", choices=["silver", "gold", "all"], help="Target layer to build")
     p_tf.add_argument("--limit", type=int, default=None, help="Optional row limit for testing")
-    p_tf.add_argument("--load-db", action="store_true", help="Persist cleaned Silver records to relational database")
+    p_tf.add_argument("--load-db", action="store_true", help="Persist cleaned records to relational database")
     p_tf.set_defaults(func=cmd_transform)
 
     # status
