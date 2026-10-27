@@ -21,6 +21,8 @@ from retailiq.agents.tools import (
     query_sales_summary,
     query_top_products,
 )
+from retailiq.analytics.anomalies import AnomalyDetector
+from retailiq.analytics.forecasting import SalesForecaster
 from retailiq.config import settings
 from retailiq.database.connection import get_session, init_db
 from retailiq.database.models import (
@@ -158,6 +160,56 @@ def get_countries_performance() -> list[dict[str, Any]]:
             }
             for r in records
         ]
+
+
+@app.get("/api/v1/analytics/anomalies")
+def get_sales_anomalies() -> list[dict[str, Any]]:
+    """Detect statistical anomalies in daily sales volume."""
+    with get_session() as session:
+        daily_records = (
+            session.query(MartDailySales)
+            .order_by(MartDailySales.date_key.asc())
+            .all()
+        )
+        if len(daily_records) < 10:
+            return []
+
+        df = pd.DataFrame([
+            {"date_key": r.date_key, "gross_revenue": r.gross_revenue}
+            for r in daily_records
+        ])
+
+        detector = AnomalyDetector()
+        results = detector.detect_daily_anomalies(df)
+        return [r.__dict__ for r in results]
+
+
+@app.get("/api/v1/analytics/forecast")
+def get_sales_forecast(horizon: int = Query(default=14, ge=3, le=30)) -> dict[str, Any]:
+    """Generate chronological autoregressive sales forecast."""
+    with get_session() as session:
+        daily_records = (
+            session.query(MartDailySales)
+            .order_by(MartDailySales.date_key.asc())
+            .all()
+        )
+        if len(daily_records) < 15:
+            return {"status": "INSUFFICIENT_DATA", "message": "Need at least 15 days of historical data for forecasting."}
+
+        df = pd.DataFrame([
+            {"date_key": r.date_key, "gross_revenue": r.gross_revenue}
+            for r in daily_records
+        ])
+
+        forecaster = SalesForecaster()
+        result = forecaster.forecast_daily_sales(df, horizon_days=horizon)
+        return {
+            "status": "SUCCESS",
+            "model_name": result.model_name,
+            "metrics": result.metrics.__dict__,
+            "forecast_points": [p.__dict__ for p in result.forecast_points],
+            "disclaimer": result.disclaimer,
+        }
 
 
 @app.get("/api/v1/data-quality")
