@@ -1,0 +1,38 @@
+project:
+  name: "RetailIQ"
+  version: "0.1.0"
+  description: "AI-Powered E-commerce Data Lakehouse & Multi-Agent Engineering Platform"
+
+storage:
+  data_dir: "data"
+  raw_dir: "data/raw"
+  bronze_parquet_dir: "data/raw/bronze"
+  processed_dir: "data/processed"
+  silver_dir: "data/processed/silver"
+  quarantine_dir: "data/quarantine"
+  batch_metadata_file: "data/processed/batches.json"
+
+dataset:
+  source_name: "UCI Online Retail Dataset"
+  download_url: "https://archive.ics.uci.edu/static/public/352/online+retail.zip"
+  archive_inner_file: "Online Retail.xlsx"
+  raw_file_path: "data/raw/Online Retail.xlsx"
+  expected_columns:
+    - InvoiceNo
+    - StockCode
+    - Description
+    - Quantity
+    - InvoiceDate
+    - UnitPrice
+    - CustomerID
+    - Country
+
+ingestion:
+  batch_size: 50000
+  enable_parquet_preservation: true
+  compression: "snappy"
+
+lakehouse:
+  bronze_table: "bronze_transactions_raw"
+  silver_table: "silver_transactions_cleaned"
+  quarantine_table: "quarantine_transactions"

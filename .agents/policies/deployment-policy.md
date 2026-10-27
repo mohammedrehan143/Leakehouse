@@ -1,5 +1,9 @@
 # Policy: Automated Git Deployment & Remote Synchronization
 
+> [!IMPORTANT]
+> **MANDATORY POLICY: PUSH TO GIT AFTER EVERY TASK IS FINISHED**
+> Under no circumstances may any task transition to DONE or be reported to the user without staging, committing with conventional semantic messages, and executing `git push origin main` to `https://github.com/mohammedrehan143/Leakehouse.git`.
+
 ## 1. Principles
 Every code change, feature, bug fix, or refactor executed by the LeakeHouse Multi-Agent System must be version-controlled and pushed upstream to GitHub automatically upon task completion.
 
@@ -9,6 +13,7 @@ Every code change, feature, bug fix, or refactor executed by the LeakeHouse Mult
 
 ## 2. Automated Triggering Rules
 1. **Trigger Condition**: When `master-orchestrator` marks a task lifecycle state as `DONE`.
+2. **Mandatory Post-Task Execution**: Every task completion automatically triggers `deployment-agent` to stage and push to git immediately.
 2. **Quality Pre-check**:
    - `deployment-agent` verifies that Gates 1 through 4 have received positive sign-offs.
    - If tests failed or review was rejected, deployment is blocked immediately.

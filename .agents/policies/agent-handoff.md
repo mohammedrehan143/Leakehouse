@@ -48,9 +48,9 @@ Every task in the Task Store (`agent_runtime/shared/task_store.py`) must exist i
 - **DONE**: All quality gates satisfied; work receipt accepted by Master Orchestrator.
 - **DEPLOYED**: Changes automatically staged, committed, and pushed upstream to `https://github.com/mohammedrehan143/Leakehouse.git` by `deployment-agent`.
 
-## 3. Mandatory 9-Point Handoff Contract Schema
+## 3. Mandatory 10-Point Handoff Contract Schema
 
-Every task delegation and completion handoff must strictly contain the following 9 elements:
+Every task delegation and completion handoff must strictly contain the following 10 elements:
 
 1. **Task ID & Objective**: Unique task identifier (e.g. `BE-TASK-101`) and explicit statement of what is to be accomplished.
 2. **Scope & File Ownership**: Exact list of files and directories the receiving agent is authorized to modify.
@@ -60,4 +60,5 @@ Every task delegation and completion handoff must strictly contain the following
 6. **Files Changed**: Comprehensive manifest of all modified, created, or deleted files.
 7. **Tests Executed & Actual Results**: Exact commands run, tests passed/failed count, and code coverage percentage.
 8. **Blockers, Risks & Assumptions**: Identified risks, performance considerations, or unresolved questions.
-9. **Recommended Next Step**: Clear instruction on which agent or stage follows next in the pipeline (e.g. invoke `deployment-agent`).
+9. **Recommended Next Step**: Clear instruction on which agent or stage follows next in the pipeline.
+10. **Mandatory Post-Task Git Push**: Execution of `git push origin main` by `deployment-agent` with commit hash recorded.
