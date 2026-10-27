@@ -47,6 +47,46 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         print(f"  - Output: {out}")
 
 
+def cmd_transform(args: argparse.Namespace) -> None:
+    """Clean Bronze records and produce Silver Lakehouse layer."""
+    print("=== RetailIQ Silver Layer Transformation ===")
+    import pyarrow.parquet as pq
+    from retailiq.database.connection import init_db
+    from retailiq.database.repositories import LakehouseRepository
+    from retailiq.transformations.cleaning import SilverCleaner
+
+    bronze_file = settings.storage.bronze_parquet_dir / "bronze_transactions_raw.parquet"
+    if not bronze_file.exists():
+        print("Bronze parquet file not found. Running ingestion first...")
+        loader = BronzeLoader()
+        loader.load_dataset(nrows=args.limit)
+
+    table = pq.read_table(bronze_file)
+    bronze_df = table.to_pandas()
+    if args.limit:
+        bronze_df = bronze_df.head(args.limit)
+
+    cleaner = SilverCleaner()
+    valid_df, quarantine_df, summary = cleaner.clean_dataframe(bronze_df, batch_id="BATCH_SILVER_TRANSFORM")
+
+    print(f"Total Bronze Records: {summary.total_bronze_records:,}")
+    print(f"Valid Silver Records: {summary.valid_silver_records:,}")
+    print(f"Quarantined Records:  {summary.quarantined_records:,}")
+    print(f"Cancellations:        {summary.cancellations_count:,}")
+    print(f"Guest Checkouts:      {summary.guest_checkouts_count:,}")
+    print(f"Silver Parquet:       {summary.silver_output_file}")
+
+    if args.load_db:
+        print("[*] Initializing database and persisting Silver records...")
+        init_db()
+        repo = LakehouseRepository()
+        inserted = repo.load_silver_dataframe(valid_df)
+        if not quarantine_df.empty:
+            repo.load_quarantine_dataframe(quarantine_df)
+        stats = repo.get_silver_stats()
+        print(f"[+] Loaded {inserted:,} records into database. Current stats: {stats}")
+
+
 def cmd_status(args: argparse.Namespace) -> None:
     """Display lakehouse batch and ingestion history."""
     print("=== RetailIQ Ingestion Status ===")
@@ -82,6 +122,12 @@ def main() -> None:
     p_ing.add_argument("--limit", type=int, default=None, help="Optional row limit for quick testing")
     p_ing.add_argument("--force", action="store_true", help="Force re-ingestion ignoring checksums")
     p_ing.set_defaults(func=cmd_ingest)
+
+    # transform
+    p_tf = subparsers.add_parser("transform", help="Clean Bronze records and produce Silver Lakehouse layer")
+    p_tf.add_argument("--limit", type=int, default=None, help="Optional row limit for testing")
+    p_tf.add_argument("--load-db", action="store_true", help="Persist cleaned Silver records to relational database")
+    p_tf.set_defaults(func=cmd_transform)
 
     # status
     p_stat = subparsers.add_parser("status", help="Inspect ingestion batches and status")
